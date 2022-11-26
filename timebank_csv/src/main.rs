@@ -1,8 +1,10 @@
 use std::fs;
-use timebank_core::*;
+use timebank_csv::*;
+use timebank_db::*;
 
-fn main() {
-    let connection = init_sqlite_db().unwrap();
+#[tokio::main]
+async fn main() {
+    let pool = init_sqlite_db().await.unwrap();
 
     let readdir = fs::read_dir("csv_data").unwrap();
     let mut csv_path_vec = vec![];
@@ -25,6 +27,7 @@ fn main() {
 
     for csv_path in csv_path_vec.iter() {
         println!("csv_path {:?}", csv_path);
-        insert_by_csv_path(&connection, csv_path).unwrap();
+        let record_vec = generate_record_vec_by_csv_path(csv_path).unwrap();
+        insert_record_vec(&pool, &record_vec).await.unwrap()
     }
 }

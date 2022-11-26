@@ -1,5 +1,5 @@
 [workspace]
-members = ["timebank_core"]
+members = ["timebank_core", "timebank_csv", "timebank_db", "timebank_http"]
 
 [profile.release]
 lto = true
