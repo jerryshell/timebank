@@ -11,28 +11,6 @@ pub struct CsvRow {
     pub remark: String,
 }
 
-pub fn generate_record_vec_by_csv_row(
-    date_str: &str,
-    time_index_begin: u32,
-    time_index_end: u32,
-    type_str: &str,
-    remark: &str,
-) -> Result<Vec<Record>, String> {
-    let mut record_vec: Vec<Record> = vec![];
-    for time_index in time_index_begin..time_index_end {
-        let record = Record {
-            date: date_str.to_string(),
-            time_index_begin: time_index,
-            time_index_end: time_index + 1,
-            type_str: type_str.to_string(),
-            remark: remark.to_string(),
-        };
-        record_vec.push(record);
-    }
-
-    Ok(record_vec)
-}
-
 pub fn generate_record_vec_by_csv_path(csv_path: &str) -> Result<Vec<Record>, String> {
     let csv_filename = csv_path.split('/').last().unwrap();
 
@@ -49,14 +27,16 @@ pub fn generate_record_vec_by_csv_path(csv_path: &str) -> Result<Vec<Record>, St
             continue;
         };
 
-        let Ok(mut sub_record_vec) = generate_record_vec_by_csv_row(
-            date_str,
-            time_index_range.0,
-            time_index_range.1,
-            &csv_row.type_str,
-            &csv_row.remark,
-        ) else {
-            println!("generate_record_vec error {:?}", csv_row);
+        let sub_record = Record {
+            date: date_str.to_string(),
+            time_index_begin: time_index_range.0,
+            time_index_end: time_index_range.1,
+            type_str: csv_row.type_str,
+            remark: csv_row.remark,
+        };
+
+        let Ok(mut sub_record_vec) = generate_record_vec(&sub_record) else {
+            println!("generate_record_vec error {:?}", sub_record);
             continue;
         };
 

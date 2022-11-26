@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[derive(Debug, Deserialize, Eq, PartialEq, Serialize, Clone)]
 pub struct Record {
     #[serde(rename = "date")]
     pub date: String,
@@ -64,4 +64,17 @@ pub fn hhmmhhmm_to_time_index_range(hhmmhhmm: &str) -> Result<(u32, u32), String
     };
 
     Ok((hhmm1_time_index, hhmm2_time_index))
+}
+
+pub fn generate_record_vec(record: &Record) -> Result<Vec<Record>, String> {
+    let mut record_vec: Vec<Record> = vec![];
+
+    for time_index in record.time_index_begin..record.time_index_end {
+        let mut new_record = (*record).clone();
+        new_record.time_index_begin = time_index;
+        new_record.time_index_end = time_index + 1;
+        record_vec.push(new_record);
+    }
+
+    Ok(record_vec)
 }

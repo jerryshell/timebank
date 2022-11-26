@@ -15,6 +15,7 @@ async fn main() {
     let app = Router::new()
         .route("/record/list", get(get_record_list))
         .route("/record/search", post(search))
+        .route("/record/create", post(create))
         .with_state(shared_state);
 
     let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
