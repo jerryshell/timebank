@@ -50,22 +50,18 @@ pub fn hhmmhhmm_to_time_index_range(hhmmhhmm: &str) -> Result<(u32, u32), String
     let Some(hhmm1) = hhmmhhmm_split.first() else {
         return Err(format!("invalid(2) hhmmhhmm: {}", hhmmhhmm));
     };
-    // println!("hhmm1 {:#?}", hhmm1);
 
     let Ok(hhmm1_time_index) = hhmm_to_time_index(hhmm1) else {
         return Err(format!("invalid(3) hhmmhhmm: {}", hhmmhhmm));
     };
-    // println!("hhmm1_time_index {:#?}", hhmm1_time_index);
 
     let Some(hhmm2) = hhmmhhmm_split.last() else {
         return Err(format!("invalid(4) hhmmhhmm: {}", hhmmhhmm));
     };
-    // println!("hhmm2 {:#?}", hhmm2);
 
     let Ok(hhmm2_time_index) = hhmm_to_time_index(hhmm2) else {
         return Err(format!("invalid(5) hhmmhhmm: {}", hhmmhhmm));
     };
-    // println!("hhmm2_time_index {:#?}", hhmm2_time_index);
 
     Ok((hhmm1_time_index, hhmm2_time_index))
 }

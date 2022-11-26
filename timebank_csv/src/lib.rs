@@ -35,26 +35,19 @@ pub fn generate_record_vec_by_csv_row(
 
 pub fn generate_record_vec_by_csv_path(csv_path: &str) -> Result<Vec<Record>, String> {
     let csv_filename = csv_path.split('/').last().unwrap();
-    // println!("csv_filename {:?}", csv_filename);
 
     let date_str = csv_filename.split('.').next().unwrap();
-    // println!("date_str {:?}", date_str);
 
     let mut record_vec: Vec<Record> = vec![];
 
     let mut reader = csv::Reader::from_path(csv_path).unwrap();
     for result in reader.deserialize() {
         let csv_row: CsvRow = result.unwrap();
-        // println!(
-        //     "{} {} {}",
-        //     csv_row.time_str, csv_row.type_str, csv_row.remark
-        // );
 
         let Ok(time_index_range) =  hhmmhhmm_to_time_index_range(&csv_row.time_str) else {
             println!("invalid time_str: {}", csv_row.time_str);
             continue;
         };
-        // println!("{:?}", time_index_range);
 
         let Ok(mut sub_record_vec) = generate_record_vec_by_csv_row(
             date_str,

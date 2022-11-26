@@ -23,7 +23,6 @@ async fn main() {
             }
         }
     }
-    // println!("csv_path_vec {:?}", csv_path_vec);
 
     for csv_path in csv_path_vec.iter() {
         println!("csv_path {:?}", csv_path);
