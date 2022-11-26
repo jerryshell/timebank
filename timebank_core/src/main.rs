@@ -1,5 +1,5 @@
 use std::fs;
-use timebank::*;
+use timebank_core::*;
 
 fn main() {
     let connection = init_sqlite_db().unwrap();

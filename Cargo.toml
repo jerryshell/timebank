@@ -1,10 +1,6 @@
-[package]
-name = "timebank"
-version = "0.1.0"
-edition = "2021"
+[workspace]
+members = ["timebank_core"]
 
-[dependencies]
-csv = "1.1"
-serde = { version = "1.0", features = ["derive"] }
-chrono = { varsion = "0.4.23", features = ["serde"] }
-rusqlite = "0.28.0"
+[profile.release]
+lto = true
+strip = true
