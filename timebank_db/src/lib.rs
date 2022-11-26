@@ -1,4 +1,7 @@
-use sqlx::{sqlite::SqlitePoolOptions, Pool, Sqlite};
+use sqlx::{
+    sqlite::{SqlitePoolOptions, SqliteRow},
+    Pool, Row, Sqlite,
+};
 use timebank_core::*;
 
 pub async fn init_sqlite_db() -> Result<Pool<Sqlite>, String> {
@@ -48,4 +51,30 @@ pub async fn insert_record_vec(pool: &Pool<Sqlite>, record_vec: &[Record]) -> Re
         insert_record(pool, record).await?;
     }
     Ok(())
+}
+
+fn sqlite_row_to_record(row: SqliteRow) -> Record {
+    let date = row.get("date");
+    let time_index_begin = row.get("time_index_begin");
+    let time_index_end = row.get("time_index_end");
+    let type_str = row.get("type_str");
+    let remark = row.get("remark");
+    Record {
+        date,
+        time_index_begin,
+        time_index_end,
+        type_str,
+        remark,
+    }
+}
+
+pub async fn get_record_list(pool: &Pool<Sqlite>) -> Result<Vec<Record>, String> {
+    match sqlx::query("select * from record order by date")
+        .map(sqlite_row_to_record)
+        .fetch_all(pool)
+        .await
+    {
+        Ok(record_list) => Ok(record_list),
+        Err(e) => Err(e.to_string()),
+    }
 }

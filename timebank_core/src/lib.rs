@@ -1,21 +1,21 @@
 use chrono::NaiveDate;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Deserialize, Eq, PartialEq)]
+#[derive(Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct Record {
     #[serde(rename = "date")]
     pub date: NaiveDate,
     #[serde(rename = "timeIndexBegin")]
-    pub time_index_begin: usize,
+    pub time_index_begin: u32,
     #[serde(rename = "timeIndexEnd")]
-    pub time_index_end: usize,
+    pub time_index_end: u32,
     #[serde(rename = "type")]
     pub type_str: String,
     #[serde(rename = "remark")]
     pub remark: String,
 }
 
-pub fn hhmm_to_time_index(hhmm: &str) -> Result<usize, String> {
+pub fn hhmm_to_time_index(hhmm: &str) -> Result<u32, String> {
     let hhmm_split: Vec<&str> = hhmm.split(':').collect();
     if hhmm_split.len() != 2 {
         return Err(format!("invalid(1) hhmm: {}", hhmm));
@@ -25,11 +25,11 @@ pub fn hhmm_to_time_index(hhmm: &str) -> Result<usize, String> {
         return Err(format!("invalid(2) hhmm: {}", hhmm));
     };
 
-    let Ok(hh_usize) = hh.parse::<usize>() else {
+    let Ok(hh_u32) = hh.parse::<u32>() else {
         return Err(format!("invalid(3) hhmm: {}", hhmm));
     };
 
-    let mut time_index = hh_usize * 2;
+    let mut time_index = hh_u32 * 2;
 
     let Some(mm) = hhmm_split.last() else {
         return Err(format!("invalid(4) hhmm: {}", hhmm));
@@ -42,7 +42,7 @@ pub fn hhmm_to_time_index(hhmm: &str) -> Result<usize, String> {
     Ok(time_index)
 }
 
-pub fn hhmmhhmm_to_time_index_range(hhmmhhmm: &str) -> Result<(usize, usize), String> {
+pub fn hhmmhhmm_to_time_index_range(hhmmhhmm: &str) -> Result<(u32, u32), String> {
     let hhmmhhmm_split: Vec<&str> = hhmmhhmm.split('-').collect();
     if hhmmhhmm_split.len() != 2 {
         return Err(format!("invalid(1) hhmmhhmm: {}", hhmmhhmm));

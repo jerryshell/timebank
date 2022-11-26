@@ -14,8 +14,8 @@ pub struct CsvRow {
 
 pub fn generate_record_vec_by_csv_row(
     date_str: &str,
-    time_index_begin: usize,
-    time_index_end: usize,
+    time_index_begin: u32,
+    time_index_end: u32,
     type_str: &str,
     remark: &str,
 ) -> Result<Vec<Record>, String> {

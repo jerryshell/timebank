@@ -1,26 +1,23 @@
-use axum::{
-    http::StatusCode,
-    response::IntoResponse,
-    routing::{get, post},
-    Json, Router,
-};
-use serde::{Deserialize, Serialize};
+use axum::{extract::State, response::IntoResponse, routing::get, Json, Router};
+use sqlx::{Pool, Sqlite};
 use std::net::SocketAddr;
-use timebank_db::*;
+use std::sync::Arc;
+
+struct AppState {
+    pool: Pool<Sqlite>,
+}
 
 #[tokio::main]
 async fn main() {
-    let pool = init_sqlite_db().await.unwrap();
+    let pool = timebank_db::init_sqlite_db().await.unwrap();
 
-    // init tracing
+    let shared_state = Arc::new(AppState { pool });
+
     tracing_subscriber::fmt::init();
 
-    // build our application with a route
     let app = Router::new()
-        // `GET /` goes to `root`
-        .route("/", get(root))
-        // `POST /users` goes to `create_user`
-        .route("/users", post(create_user));
+        .route("/record/list", get(get_record_list))
+        .with_state(shared_state);
 
     let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
     tracing::info!("listening on {}", addr);
@@ -30,34 +27,9 @@ async fn main() {
         .unwrap();
 }
 
-// basic handler that responds with a static string
-async fn root() -> &'static str {
-    "Hello, World!"
-}
-
-async fn create_user(
-    // this argument tells axum to parse the request body
-    // as JSON into a `CreateUser` type
-    Json(payload): Json<CreateUser>,
-) -> impl IntoResponse {
-    // insert your application logic here
-    let user = User {
-        id: 1337,
-        username: payload.username,
-    };
-
-    // this will be converted into a JSON response
-    // with a status code of `201 Created`
-    (StatusCode::CREATED, Json(user))
-}
-
-#[derive(Deserialize)]
-struct CreateUser {
-    username: String,
-}
-
-#[derive(Serialize)]
-struct User {
-    id: u64,
-    username: String,
+async fn get_record_list(State(state): State<Arc<AppState>>) -> impl IntoResponse {
+    match timebank_db::get_record_list(&state.pool).await {
+        Ok(record_list) => Json(record_list),
+        Err(_) => Json(vec![]),
+    }
 }
