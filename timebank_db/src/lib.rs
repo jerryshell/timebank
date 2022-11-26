@@ -78,3 +78,20 @@ pub async fn get_record_list(pool: &Pool<Sqlite>) -> Result<Vec<Record>, String>
         Err(e) => Err(e.to_string()),
     }
 }
+
+pub async fn search_record(
+    pool: &Pool<Sqlite>,
+    date_begin: &str,
+    date_end: &str,
+) -> Result<Vec<Record>, String> {
+    match sqlx::query("select * from record where date between ? and ? order by date")
+        .bind(date_begin)
+        .bind(date_end)
+        .map(sqlite_row_to_record)
+        .fetch_all(pool)
+        .await
+    {
+        Ok(record_list) => Ok(record_list),
+        Err(e) => Err(e.to_string()),
+    }
+}
