@@ -8,5 +8,4 @@ timebank_core = { path = "../timebank_core" }
 timebank_db = { path = "../timebank_db" }
 csv = "1.1"
 serde = { version = "1.0", features = ["derive"] }
-chrono = { varsion = "0.4.23", features = ["serde"] }
 tokio = { version = "1", features = ["full"] }

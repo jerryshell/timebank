@@ -1,4 +1,3 @@
-use chrono::NaiveDate;
 use serde::Deserialize;
 use timebank_core::*;
 
@@ -20,12 +19,9 @@ pub fn generate_record_vec_by_csv_row(
     remark: &str,
 ) -> Result<Vec<Record>, String> {
     let mut record_vec: Vec<Record> = vec![];
-
-    let date = NaiveDate::parse_from_str(date_str, "%Y-%m-%d").unwrap();
-
     for time_index in time_index_begin..time_index_end {
         let record = Record {
-            date,
+            date: date_str.to_string(),
             time_index_begin: time_index,
             time_index_end: time_index + 1,
             type_str: type_str.to_string(),

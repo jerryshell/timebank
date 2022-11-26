@@ -15,7 +15,7 @@ pub async fn init_sqlite_db() -> Result<Pool<Sqlite>, String> {
 
     if let Err(e) = sqlx::query(
         "create table if not exists record (
-             date date,
+             date text,
              time_index_begin integer,
              time_index_end integer,
              type_str text,
@@ -35,7 +35,7 @@ pub async fn insert_record(pool: &Pool<Sqlite>, record: &Record) -> Result<(), S
     if let Err(e) = sqlx::query(
         "insert or replace into record (date, time_index_begin, time_index_end, type_str, remark) values (?, ?, ?, ?, ?)"
     )
-    .bind(record.date)
+    .bind(record.date.to_string())
     .bind(record.time_index_begin.to_string())
     .bind(record.time_index_end.to_string())
     .bind(record.type_str.to_string())

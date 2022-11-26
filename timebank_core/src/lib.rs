@@ -1,10 +1,9 @@
-use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub struct Record {
     #[serde(rename = "date")]
-    pub date: NaiveDate,
+    pub date: String,
     #[serde(rename = "timeIndexBegin")]
     pub time_index_begin: u32,
     #[serde(rename = "timeIndexEnd")]
