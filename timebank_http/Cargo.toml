@@ -12,3 +12,4 @@ axum = { version = "0.6.0", features = ["http2"] }
 tracing = "0.1"
 tracing-subscriber = "0.3"
 sqlx = { version = "0.6", features = ["runtime-tokio-rustls", "sqlite"] }
+tower-http = { version = "0.3.4", features = ["cors"] }

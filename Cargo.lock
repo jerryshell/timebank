@@ -1187,6 +1187,7 @@ dependencies = [
  "timebank_core",
  "timebank_db",
  "tokio",
+ "tower-http",
  "tracing",
  "tracing-subscriber",
 ]
