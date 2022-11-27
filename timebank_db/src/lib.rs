@@ -19,7 +19,8 @@ pub async fn init_sqlite_db() -> Result<Pool<Sqlite>, String> {
              time_index_begin integer,
              time_index_end integer,
              type_str text,
-             remark text
+             remark text,
+             primary key(date, time_index_begin, time_index_end)
          )",
     )
     .execute(&pool)
