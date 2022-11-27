@@ -6,5 +6,5 @@ edition = "2021"
 [dependencies]
 timebank_core = { path = "../timebank_core" }
 serde = { version = "1.0", features = ["derive"] }
-sqlx = { version = "0.6", features = ["runtime-tokio-native-tls", "sqlite"] }
+sqlx = { version = "0.6", features = ["runtime-tokio-rustls", "sqlite"] }
 tokio = { version = "1", features = ["full"] }
