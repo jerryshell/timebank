@@ -70,7 +70,7 @@ fn sqlite_row_to_record(row: SqliteRow) -> Record {
 }
 
 pub async fn get_record_list(pool: &Pool<Sqlite>) -> Result<Vec<Record>, String> {
-    match sqlx::query("select * from record order by date")
+    match sqlx::query("select * from record order by date desc, time_index_end desc")
         .map(sqlite_row_to_record)
         .fetch_all(pool)
         .await
@@ -85,12 +85,14 @@ pub async fn search_record(
     date_begin: &str,
     date_end: &str,
 ) -> Result<Vec<Record>, String> {
-    match sqlx::query("select * from record where date between ? and ? order by date")
-        .bind(date_begin)
-        .bind(date_end)
-        .map(sqlite_row_to_record)
-        .fetch_all(pool)
-        .await
+    match sqlx::query(
+        "select * from record where date between ? and ? order by date desc, time_index_end desc",
+    )
+    .bind(date_begin)
+    .bind(date_end)
+    .map(sqlite_row_to_record)
+    .fetch_all(pool)
+    .await
     {
         Ok(record_list) => Ok(record_list),
         Err(e) => Err(e.to_string()),
