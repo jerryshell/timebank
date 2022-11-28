@@ -16,16 +16,14 @@ pub struct SearchForm {
     date_end: String,
 }
 
-pub async fn get_record_list(
-    State(state): State<Arc<AppState>>,
-) -> Result<Json<Vec<Record>>, String> {
+pub async fn record_list(State(state): State<Arc<AppState>>) -> Result<Json<Vec<Record>>, String> {
     match timebank_db::get_record_list(&state.pool).await {
         Ok(record_list) => Ok(Json(record_list)),
         Err(e) => Err(e),
     }
 }
 
-pub async fn search(
+pub async fn record_search(
     State(state): State<Arc<AppState>>,
     Json(form): Json<SearchForm>,
 ) -> Result<Json<Vec<Record>>, String> {
@@ -35,7 +33,7 @@ pub async fn search(
     }
 }
 
-pub async fn create(
+pub async fn record_create(
     State(state): State<Arc<AppState>>,
     Json(record): Json<Record>,
 ) -> Result<Json<Vec<Record>>, String> {

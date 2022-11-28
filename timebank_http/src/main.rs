@@ -19,9 +19,9 @@ async fn main() {
         .allow_headers(Any);
 
     let app = Router::new()
-        .route("/record/list", get(get_record_list))
-        .route("/record/search", post(search))
-        .route("/record/create", post(create))
+        .route("/record/list", get(record_list))
+        .route("/record/search", post(record_search))
+        .route("/record/create", post(record_create))
         .with_state(shared_state)
         .layer(cors);
 
