@@ -20,6 +20,7 @@ async fn main() {
         .allow_headers(Any);
 
     let app = Router::new()
+        .route("/health", get(health))
         .route("/record/list", get(record_list))
         .route("/record/search", post(record_search))
         .route("/record/create", post(record_create))

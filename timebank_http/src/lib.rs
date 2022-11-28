@@ -22,6 +22,10 @@ pub struct SearchForm {
     date_end: String,
 }
 
+pub async fn health() -> StatusCode {
+    StatusCode::OK
+}
+
 pub async fn record_list(State(app_state): State<Arc<AppState>>) -> (StatusCode, Json<Value>) {
     match timebank_db::get_record_list(&app_state.pool).await {
         Ok(record_list) => (StatusCode::OK, Json(json!(record_list))),
