@@ -2,7 +2,7 @@
 
 ⏰ *Timebank* is a time recording and statistics tool.
 
-🏗️ This project is currently at an early stage.
+Web UI: [https://github.com/jerryshell/timebank-web](https://github.com/jerryshell/timebank-web)
 
 ```text
 timebank_core -- Basic structures and functions
@@ -15,7 +15,8 @@ timebank_http -- HTTP API
 
 *Timebank* divides 24 hours of the day into 48 time clips, each of which is 30 minutes.
 
-```
+```python
+# Python code
 time_index = hh * 2 + mm // 30
 ```
 
