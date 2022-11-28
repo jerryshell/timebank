@@ -4,12 +4,13 @@ use std::net::SocketAddr;
 use std::sync::Arc;
 use timebank_http::*;
 use tower_http::cors::{Any, CorsLayer};
+use tracing::info;
 
 #[tokio::main]
 async fn main() {
     let pool = timebank_db::init_sqlite_db().await.unwrap();
 
-    let shared_state = Arc::new(AppState { pool });
+    let app_state = Arc::new(AppState { pool });
 
     tracing_subscriber::fmt::init();
 
@@ -22,17 +23,20 @@ async fn main() {
         .route("/record/list", get(record_list))
         .route("/record/search", post(record_search))
         .route("/record/create", post(record_create))
-        .with_state(shared_state)
+        .with_state(app_state)
         .layer(cors);
 
     let port = std::env::var("PORT")
         .ok()
         .and_then(|s| s.parse().ok())
         .unwrap_or(3000);
-    println!("port {}", port);
+    info!("port: {}", port);
+
+    let admin_token = std::env::var("ADMIN_TOKEN").unwrap_or("admin_token".to_string());
+    info!("admin_token: {}", admin_token);
 
     let addr = SocketAddr::from(([0, 0, 0, 0], port));
-    tracing::info!("address on {}", addr);
+    info!("address on: {}", addr);
     axum::Server::bind(&addr)
         .serve(app.into_make_service())
         .await

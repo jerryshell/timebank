@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 PORT=3000
+ADMIN_TOKEN="YOUR_TOKEN"
 BASE_PATH=$(pwd)
 BIN_FILENAME=$1
 LOG_FILENAME="$BIN_FILENAME.$(date -u +%Y-%m-%dT%H:%M:%SZ).log"

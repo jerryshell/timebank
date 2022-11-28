@@ -7,6 +7,7 @@ edition = "2021"
 timebank_core = { path = "../timebank_core" }
 timebank_db = { path = "../timebank_db" }
 serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0.89"
 tokio = { version = "1.22", features = ["full"] }
 axum = { version = "0.6.0", features = ["http2"] }
 tracing = "0.1"
