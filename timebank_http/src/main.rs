@@ -25,8 +25,14 @@ async fn main() {
         .with_state(shared_state)
         .layer(cors);
 
-    let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
-    tracing::info!("listening on {}", addr);
+    let port = std::env::var("PORT")
+        .ok()
+        .and_then(|s| s.parse().ok())
+        .unwrap_or(3000);
+    println!("port {}", port);
+
+    let addr = SocketAddr::from(([0, 0, 0, 0], port));
+    tracing::info!("address on {}", addr);
     axum::Server::bind(&addr)
         .serve(app.into_make_service())
         .await
