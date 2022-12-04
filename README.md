@@ -17,15 +17,15 @@ HTTP API usage reference: [timebank-web/src/api](https://github.com/jerryshell/t
 
 ### `GET /health`
 
-Check server status
+Check server status.
 
 ### `GET /record/list`
 
-Get a list of all records
+Get a list of all records.
 
 ### `POST /record/search`
 
-Search record
+Search record.
 
 Request JSON body:
 
@@ -38,9 +38,9 @@ Request JSON body:
 
 ### `POST /record/create`
 
-Create record
+Create record.
 
-You need to add `admin_token` to http header
+You need to add `admin_token` to http header.
 
 `admin_token` can be customized in environment variables(ADMIN_TOKEN), example: [restart.sh](restart.sh)
 
@@ -71,6 +71,14 @@ Example:
 00:00-08:30 => (0+0, 16+1) => (0, 17)
 10:30-17:00 => (20+1, 34+0) => (20, 34)
 18:00-24:00 => (36+0, 48+0) => (36, 48)
+```
+
+## How to use `restart.sh`
+
+You first need to put the `timebank_http` binary and `restart.sh` in the same directory.
+
+```bash
+./restart.sh timebank_http
 ```
 
 ## LICENSE
