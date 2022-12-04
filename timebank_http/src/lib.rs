@@ -53,7 +53,7 @@ pub async fn record_create(
     info!("admin_token {:#?}", admin_token);
 
     let admin_token_from_request = match headers.get("admin_token") {
-        Some(value) => value.to_str().unwrap(),
+        Some(value) => value.to_str().unwrap_or(""),
         None => {
             return (
                 StatusCode::BAD_REQUEST,
@@ -86,7 +86,7 @@ pub async fn db_backup_scheduler_start() {
 
     let cron = "0 0 0 * * * *";
 
-    sched.add(Job::new(cron.parse().unwrap(), || {
+    sched.add(Job::new(cron.parse().expect("cron.parse() err"), || {
         match timebank_db::db_backup() {
             Ok(db_backup_filename) => info!("db_backup_scheduler ok {}", db_backup_filename),
             Err(e) => warn!("db_backup_scheduler err {}", e),

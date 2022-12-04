@@ -8,7 +8,9 @@ use tracing::info;
 
 #[tokio::main]
 async fn main() {
-    let pool = timebank_db::init_sqlite_db().await.unwrap();
+    let pool = timebank_db::init_sqlite_db()
+        .await
+        .expect("timebank_db::init_sqlite_db() err");
 
     let app_state = Arc::new(AppState { pool });
 
@@ -43,5 +45,5 @@ async fn main() {
     axum::Server::bind(&addr)
         .serve(app.into_make_service())
         .await
-        .unwrap();
+        .expect("axum::Server::bind().serve() err");
 }

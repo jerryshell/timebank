@@ -106,7 +106,7 @@ pub async fn search_record(
 pub fn db_backup() -> Result<String, String> {
     let duration_since_unix_epoch = SystemTime::now()
         .duration_since(UNIX_EPOCH)
-        .unwrap()
+        .expect("SystemTime::now().duration_since() err")
         .as_secs();
     let db_backup_filename = format!("timebank.{}.sqlite", duration_since_unix_epoch);
     if let Err(e) = fs::copy("timebank.sqlite", db_backup_filename.clone()) {
