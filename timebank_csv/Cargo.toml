@@ -9,3 +9,6 @@ timebank_db = { path = "../timebank_db" }
 csv = "1.1"
 serde = { version = "1.0", features = ["derive"] }
 tokio = { version = "1", features = ["full"] }
+glob = "0.3.0"
+tracing = "0.1"
+tracing-subscriber = "0.3"
