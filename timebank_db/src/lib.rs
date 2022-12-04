@@ -108,7 +108,7 @@ pub fn db_backup() -> Result<String, String> {
         .duration_since(UNIX_EPOCH)
         .expect("SystemTime::now().duration_since() err")
         .as_secs();
-    let db_backup_filename = format!("timebank.{}.sqlite", duration_since_unix_epoch);
+    let db_backup_filename = format!("timebank.{duration_since_unix_epoch}.sqlite");
     if let Err(e) = fs::copy("timebank.sqlite", db_backup_filename.clone()) {
         return Err(e.to_string());
     };
