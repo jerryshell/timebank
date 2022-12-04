@@ -2,6 +2,10 @@ use sqlx::{
     sqlite::{SqlitePoolOptions, SqliteRow},
     Pool, Row, Sqlite,
 };
+use std::{
+    fs,
+    time::{SystemTime, UNIX_EPOCH},
+};
 use timebank_core::*;
 
 pub async fn init_sqlite_db() -> Result<Pool<Sqlite>, String> {
@@ -97,4 +101,16 @@ pub async fn search_record(
         Ok(record_list) => Ok(record_list),
         Err(e) => Err(e.to_string()),
     }
+}
+
+pub fn db_backup() -> Result<String, String> {
+    let duration_since_unix_epoch = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_secs();
+    let db_backup_filename = format!("timebank.{}.sqlite", duration_since_unix_epoch);
+    if let Err(e) = fs::copy("timebank.sqlite", db_backup_filename.clone()) {
+        return Err(e.to_string());
+    };
+    Ok(db_backup_filename)
 }

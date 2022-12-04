@@ -14,6 +14,8 @@ async fn main() {
 
     tracing_subscriber::fmt::init();
 
+    tokio::spawn(async { db_backup_scheduler_start().await });
+
     let cors = CorsLayer::new()
         .allow_origin(Any)
         .allow_methods(Any)

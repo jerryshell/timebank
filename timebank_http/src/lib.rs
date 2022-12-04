@@ -3,12 +3,13 @@ use axum::{
     http::{HeaderMap, StatusCode},
     Json,
 };
+use job_scheduler::{Job, JobScheduler};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use sqlx::{Pool, Sqlite};
-use std::sync::Arc;
+use std::{sync::Arc, time::Duration};
 use timebank_core::Record;
-use tracing::info;
+use tracing::{info, warn};
 
 pub struct AppState {
     pub pool: Pool<Sqlite>,
@@ -77,5 +78,26 @@ pub async fn record_create(
             }
         }
         Err(e) => (StatusCode::BAD_REQUEST, Json(json!({ "message": e }))),
+    }
+}
+
+pub async fn db_backup_scheduler_start() {
+    let mut sched = JobScheduler::new();
+
+    let cron = "0 0 0 * * * *";
+
+    sched.add(Job::new(cron.parse().unwrap(), || {
+        match timebank_db::db_backup() {
+            Ok(db_backup_filename) => info!("db_backup_scheduler ok {}", db_backup_filename),
+            Err(e) => warn!("db_backup_scheduler err {}", e),
+        };
+    }));
+
+    info!("db_backup_scheduler_start {}", cron);
+
+    loop {
+        sched.tick();
+
+        std::thread::sleep(Duration::from_millis(500));
     }
 }
