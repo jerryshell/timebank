@@ -1,5 +1,6 @@
 use axum::routing::post;
 use axum::{routing::get, Router};
+use std::collections::HashMap;
 use std::net::SocketAddr;
 use std::sync::Arc;
 use timebank_http::*;
@@ -13,7 +14,10 @@ async fn main() {
         .await
         .expect("timebank_db::init_sqlite_db() err");
 
-    let app_state = Arc::new(Mutex::new(AppState { pool }));
+    let app_state = Arc::new(Mutex::new(AppState {
+        pool,
+        ip_to_admin_token_error_count_map: HashMap::new(),
+    }));
 
     tracing_subscriber::fmt::init();
 
@@ -44,7 +48,7 @@ async fn main() {
     let addr = SocketAddr::from(([0, 0, 0, 0], port));
     info!("address on: {}", addr);
     axum::Server::bind(&addr)
-        .serve(app.into_make_service())
+        .serve(app.into_make_service_with_connect_info::<SocketAddr>())
         .await
         .expect("axum::Server::bind().serve() err");
 }

@@ -7,13 +7,15 @@ use job_scheduler::{Job, JobScheduler};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use sqlx::{Pool, Sqlite};
-use std::{net::SocketAddr, sync::Arc, time::Duration};
+use std::{collections::HashMap, net::SocketAddr, sync::Arc, time::Duration};
 use timebank_core::Record;
 use tokio::sync::Mutex;
 use tracing::{info, warn};
 
+#[derive(Debug)]
 pub struct AppState {
     pub pool: Pool<Sqlite>,
+    pub ip_to_admin_token_error_count_map: HashMap<String, u32>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -60,8 +62,32 @@ pub async fn record_create(
     Json(record): Json<Record>,
 ) -> (StatusCode, Json<Value>) {
     info!("addr {:#?}", addr);
+
     let client_ip = addr.ip().to_string();
     info!("client_ip {:#?}", client_ip);
+
+    let mut app_state = app_state.lock().await;
+    info!("app_state {:#?}", app_state);
+
+    let ip_to_admin_token_error_count_map = &mut app_state.ip_to_admin_token_error_count_map;
+    info!(
+        "ip_to_admin_token_error_count_map {:#?}",
+        ip_to_admin_token_error_count_map
+    );
+
+    let admin_token_error_count = ip_to_admin_token_error_count_map
+        .get(&client_ip)
+        .unwrap_or(&0);
+    info!("admin_token_error_count {:#?}", admin_token_error_count);
+
+    if *admin_token_error_count >= 3 {
+        return (
+            StatusCode::FORBIDDEN,
+            Json(json!({
+                "message": format!("This ip has been banned: {client_ip}")
+            })),
+        );
+    }
 
     let admin_token = std::env::var("ADMIN_TOKEN").unwrap_or("admin_token".to_string());
     info!("admin_token {:#?}", admin_token);
@@ -69,15 +95,17 @@ pub async fn record_create(
     let admin_token_from_request = match headers.get("admin_token") {
         Some(value) => value.to_str().unwrap_or(""),
         None => {
+            ip_to_admin_token_error_count_map.insert(client_ip, *admin_token_error_count + 1);
             return (
                 StatusCode::BAD_REQUEST,
                 Json(json!({ "message": "admin_token bank" })),
-            )
+            );
         }
     };
     info!("admin_token_from_request {:#?}", admin_token_from_request);
 
     if admin_token != admin_token_from_request {
+        ip_to_admin_token_error_count_map.insert(client_ip, *admin_token_error_count + 1);
         return (
             StatusCode::BAD_REQUEST,
             Json(json!({ "message": "admin_token invalid" })),
@@ -86,7 +114,7 @@ pub async fn record_create(
 
     match timebank_core::generate_record_vec(&record) {
         Ok(record_vec) => {
-            match timebank_db::insert_record_vec(&app_state.lock().await.pool, &record_vec).await {
+            match timebank_db::insert_record_vec(&app_state.pool, &record_vec).await {
                 Ok(_) => (StatusCode::OK, Json(json!(record_vec))),
                 Err(e) => (StatusCode::BAD_REQUEST, Json(json!({ "message": e }))),
             }
