@@ -11,6 +11,47 @@ timebank_db   -- Database access layer
 timebank_http -- HTTP API
 ```
 
+## HTTP API
+
+HTTP API usage reference: [timebank-web/src/api](https://github.com/jerryshell/timebank-web/tree/master/src/api)
+
+### `GET /health`
+
+Check server status
+
+### `GET /record/list`
+
+Get a list of all records
+
+### `POST /record/search`
+
+Search record
+
+POST JSON body:
+
+```json
+{
+    "dateBegin": "yyyy-mm-dd",
+    "dateEnd": "yyyy-mm-dd"
+}
+```
+
+### `POST /record/create`
+
+Create record
+
+POST JSON body:
+
+```json
+{
+    "date": "yyyy-mm-dd",
+    "timeIndexBegin": 1,
+    "timeIndexEnd": 12,
+    "type": "string",
+    "remark": "string"
+}
+```
+
 ## About `time_index`
 
 *Timebank* divides 24 hours of the day into 48 time clips, each of which is 30 minutes.
