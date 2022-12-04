@@ -1,13 +1,14 @@
 use axum::{
-    extract::{ConnectInfo, State},
+    extract::State,
     http::{HeaderMap, StatusCode},
     Json,
 };
+use axum_client_ip::ClientIp;
 use job_scheduler::{Job, JobScheduler};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use sqlx::{Pool, Sqlite};
-use std::{collections::HashMap, net::SocketAddr, sync::Arc, time::Duration};
+use std::{collections::HashMap, sync::Arc, time::Duration};
 use timebank_core::Record;
 use tokio::sync::Mutex;
 use tracing::{info, warn};
@@ -56,15 +57,13 @@ pub async fn record_search(
 }
 
 pub async fn record_create(
-    ConnectInfo(addr): ConnectInfo<SocketAddr>,
+    ClientIp(client_ip): ClientIp,
     headers: HeaderMap,
     State(app_state): State<Arc<Mutex<AppState>>>,
     Json(record): Json<Record>,
 ) -> (StatusCode, Json<Value>) {
-    info!("addr {:#?}", addr);
-
-    let client_ip = addr.ip().to_string();
     info!("client_ip {:#?}", client_ip);
+    let client_ip = client_ip.to_string();
 
     let mut app_state = app_state.lock().await;
     info!("app_state {:#?}", app_state);
