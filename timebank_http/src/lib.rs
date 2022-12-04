@@ -9,6 +9,7 @@ use serde_json::{json, Value};
 use sqlx::{Pool, Sqlite};
 use std::{net::SocketAddr, sync::Arc, time::Duration};
 use timebank_core::Record;
+use tokio::sync::Mutex;
 use tracing::{info, warn};
 
 pub struct AppState {
@@ -27,18 +28,26 @@ pub async fn health() -> StatusCode {
     StatusCode::OK
 }
 
-pub async fn record_list(State(app_state): State<Arc<AppState>>) -> (StatusCode, Json<Value>) {
-    match timebank_db::get_record_list(&app_state.pool).await {
+pub async fn record_list(
+    State(app_state): State<Arc<Mutex<AppState>>>,
+) -> (StatusCode, Json<Value>) {
+    match timebank_db::get_record_list(&app_state.lock().await.pool).await {
         Ok(record_list) => (StatusCode::OK, Json(json!(record_list))),
         Err(e) => (StatusCode::BAD_REQUEST, Json(json!({ "message": e }))),
     }
 }
 
 pub async fn record_search(
-    State(app_state): State<Arc<AppState>>,
+    State(app_state): State<Arc<Mutex<AppState>>>,
     Json(form): Json<SearchForm>,
 ) -> (StatusCode, Json<Value>) {
-    match timebank_db::search_record(&app_state.pool, &form.date_begin, &form.date_end).await {
+    match timebank_db::search_record(
+        &app_state.lock().await.pool,
+        &form.date_begin,
+        &form.date_end,
+    )
+    .await
+    {
         Ok(record_list) => (StatusCode::OK, Json(json!(record_list))),
         Err(e) => (StatusCode::BAD_REQUEST, Json(json!({ "message": e }))),
     }
@@ -47,7 +56,7 @@ pub async fn record_search(
 pub async fn record_create(
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
     headers: HeaderMap,
-    State(app_state): State<Arc<AppState>>,
+    State(app_state): State<Arc<Mutex<AppState>>>,
     Json(record): Json<Record>,
 ) -> (StatusCode, Json<Value>) {
     info!("addr {:#?}", addr);
@@ -77,7 +86,7 @@ pub async fn record_create(
 
     match timebank_core::generate_record_vec(&record) {
         Ok(record_vec) => {
-            match timebank_db::insert_record_vec(&app_state.pool, &record_vec).await {
+            match timebank_db::insert_record_vec(&app_state.lock().await.pool, &record_vec).await {
                 Ok(_) => (StatusCode::OK, Json(json!(record_vec))),
                 Err(e) => (StatusCode::BAD_REQUEST, Json(json!({ "message": e }))),
             }

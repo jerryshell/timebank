@@ -3,6 +3,7 @@ use axum::{routing::get, Router};
 use std::net::SocketAddr;
 use std::sync::Arc;
 use timebank_http::*;
+use tokio::sync::Mutex;
 use tower_http::cors::{Any, CorsLayer};
 use tracing::info;
 
@@ -12,7 +13,7 @@ async fn main() {
         .await
         .expect("timebank_db::init_sqlite_db() err");
 
-    let app_state = Arc::new(AppState { pool });
+    let app_state = Arc::new(Mutex::new(AppState { pool }));
 
     tracing_subscriber::fmt::init();
 
