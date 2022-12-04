@@ -1,5 +1,5 @@
 use axum::{
-    extract::State,
+    extract::{ConnectInfo, State},
     http::{HeaderMap, StatusCode},
     Json,
 };
@@ -7,7 +7,7 @@ use job_scheduler::{Job, JobScheduler};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use sqlx::{Pool, Sqlite};
-use std::{sync::Arc, time::Duration};
+use std::{net::SocketAddr, sync::Arc, time::Duration};
 use timebank_core::Record;
 use tracing::{info, warn};
 
@@ -45,10 +45,15 @@ pub async fn record_search(
 }
 
 pub async fn record_create(
+    ConnectInfo(addr): ConnectInfo<SocketAddr>,
     headers: HeaderMap,
     State(app_state): State<Arc<AppState>>,
     Json(record): Json<Record>,
 ) -> (StatusCode, Json<Value>) {
+    info!("addr {:#?}", addr);
+    let client_ip = addr.ip().to_string();
+    info!("client_ip {:#?}", client_ip);
+
     let admin_token = std::env::var("ADMIN_TOKEN").unwrap_or("admin_token".to_string());
     info!("admin_token {:#?}", admin_token);
 
