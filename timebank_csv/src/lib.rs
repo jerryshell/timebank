@@ -1,7 +1,7 @@
 use serde::Deserialize;
 use std::path::PathBuf;
 use timebank_core::*;
-use tracing::warn;
+use tracing::{instrument, warn};
 
 #[derive(Debug, Deserialize, Eq, PartialEq)]
 pub struct CsvRow {
@@ -13,6 +13,7 @@ pub struct CsvRow {
     pub remark: String,
 }
 
+#[instrument]
 pub fn generate_record_vec_by_csv_path(csv_path: &PathBuf) -> Result<Vec<Record>, String> {
     let csv_filename = csv_path
         .file_name()
@@ -32,7 +33,7 @@ pub fn generate_record_vec_by_csv_path(csv_path: &PathBuf) -> Result<Vec<Record>
         let csv_row: CsvRow = result.expect("reader.deserialize().result err");
 
         let Ok(time_index_range) =  hhmmhhmm_to_time_index_range(&csv_row.time_str) else {
-            warn!("invalid time_str: {}", csv_row.time_str);
+            warn!("invalid csv_row.time_str={}", csv_row.time_str);
             continue;
         };
 
@@ -45,7 +46,7 @@ pub fn generate_record_vec_by_csv_path(csv_path: &PathBuf) -> Result<Vec<Record>
         };
 
         let Ok(mut sub_record_vec) = generate_record_vec(&sub_record) else {
-            warn!("generate_record_vec error {:?}", sub_record);
+            warn!("generate_record_vec error sub_record={:?}", sub_record);
             continue;
         };
 
