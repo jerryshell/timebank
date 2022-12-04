@@ -27,7 +27,7 @@ Get a list of all records
 
 Search record
 
-POST JSON body:
+Request JSON body:
 
 ```json
 {
@@ -40,7 +40,11 @@ POST JSON body:
 
 Create record
 
-POST JSON body:
+You need to add `admin_token` to http header
+
+`admin_token` can be customized in environment variables(ADMIN_TOKEN), example: [restart.sh](restart.sh)
+
+Request JSON body:
 
 ```json
 {
