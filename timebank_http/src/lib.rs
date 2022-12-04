@@ -11,7 +11,7 @@ use sqlx::{Pool, Sqlite};
 use std::{collections::HashMap, sync::Arc, time::Duration};
 use timebank_core::Record;
 use tokio::sync::Mutex;
-use tracing::{info, warn};
+use tracing::{info, instrument, warn};
 
 #[derive(Debug)]
 pub struct AppState {
@@ -19,7 +19,7 @@ pub struct AppState {
     pub ip_to_admin_token_error_count_map: HashMap<String, u32>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct SearchForm {
     #[serde(rename = "dateBegin")]
     date_begin: String,
@@ -27,10 +27,12 @@ pub struct SearchForm {
     date_end: String,
 }
 
+#[instrument]
 pub async fn health() -> StatusCode {
     StatusCode::OK
 }
 
+#[instrument]
 pub async fn record_list(
     State(app_state): State<Arc<Mutex<AppState>>>,
 ) -> (StatusCode, Json<Value>) {
@@ -40,6 +42,7 @@ pub async fn record_list(
     }
 }
 
+#[instrument]
 pub async fn record_search(
     State(app_state): State<Arc<Mutex<AppState>>>,
     Json(form): Json<SearchForm>,
@@ -56,28 +59,23 @@ pub async fn record_search(
     }
 }
 
+#[instrument]
 pub async fn record_create(
     ClientIp(client_ip): ClientIp,
     headers: HeaderMap,
     State(app_state): State<Arc<Mutex<AppState>>>,
     Json(record): Json<Record>,
 ) -> (StatusCode, Json<Value>) {
-    info!("client_ip {:#?}", client_ip);
     let client_ip = client_ip.to_string();
 
     let mut app_state = app_state.lock().await;
-    info!("app_state {:#?}", app_state);
 
     let ip_to_admin_token_error_count_map = &mut app_state.ip_to_admin_token_error_count_map;
-    info!(
-        "ip_to_admin_token_error_count_map {:#?}",
-        ip_to_admin_token_error_count_map
-    );
 
     let admin_token_error_count = ip_to_admin_token_error_count_map
         .get(&client_ip)
         .unwrap_or(&0);
-    info!("admin_token_error_count {:#?}", admin_token_error_count);
+    info!(admin_token_error_count);
 
     if *admin_token_error_count >= 3 {
         return (
@@ -89,7 +87,7 @@ pub async fn record_create(
     }
 
     let admin_token = std::env::var("ADMIN_TOKEN").unwrap_or("admin_token".to_string());
-    info!("admin_token {:#?}", admin_token);
+    info!(admin_token);
 
     let admin_token_from_request = match headers.get("admin_token") {
         Some(value) => value.to_str().unwrap_or(""),
@@ -101,7 +99,7 @@ pub async fn record_create(
             );
         }
     };
-    info!("admin_token_from_request {:#?}", admin_token_from_request);
+    info!(admin_token_from_request);
 
     if admin_token != admin_token_from_request {
         ip_to_admin_token_error_count_map.insert(client_ip, *admin_token_error_count + 1);
@@ -122,6 +120,7 @@ pub async fn record_create(
     }
 }
 
+#[instrument]
 pub async fn db_backup_scheduler_start() {
     let mut sched = JobScheduler::new();
 
@@ -129,12 +128,15 @@ pub async fn db_backup_scheduler_start() {
 
     sched.add(Job::new(cron.parse().expect("cron.parse() err"), || {
         match timebank_db::db_backup() {
-            Ok(db_backup_filename) => info!("db_backup_scheduler ok {}", db_backup_filename),
-            Err(e) => warn!("db_backup_scheduler err {}", e),
+            Ok(db_backup_filename) => info!(
+                "db_backup_scheduler ok db_backup_filename={}",
+                db_backup_filename
+            ),
+            Err(e) => warn!("db_backup_scheduler err e={}", e),
         };
     }));
 
-    info!("db_backup_scheduler_start {}", cron);
+    info!(cron);
 
     loop {
         sched.tick();
