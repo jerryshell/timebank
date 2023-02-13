@@ -1,9 +1,3 @@
-#[derive(Debug)]
-pub struct AppState {
-    pub pool: sqlx::SqlitePool,
-    pub ip_to_admin_token_error_count_map: std::collections::HashMap<String, u32>,
-}
-
 #[derive(serde::Serialize, serde::Deserialize, Debug)]
 pub struct SearchForm {
     #[serde(rename = "dateBegin")]
@@ -17,11 +11,9 @@ pub async fn health() -> axum::http::StatusCode {
 }
 
 pub async fn record_list(
-    axum::extract::State(app_state): axum::extract::State<
-        std::sync::Arc<tokio::sync::Mutex<AppState>>,
-    >,
+    axum::Extension(db_pool): axum::Extension<sqlx::SqlitePool>,
 ) -> (axum::http::StatusCode, axum::Json<serde_json::Value>) {
-    match timebank_db::get_record_list(&app_state.lock().await.pool).await {
+    match timebank_db::get_record_list(&db_pool).await {
         Ok(record_list) => (
             axum::http::StatusCode::OK,
             axum::Json(serde_json::json!(record_list)),
@@ -34,18 +26,10 @@ pub async fn record_list(
 }
 
 pub async fn record_search(
-    axum::extract::State(app_state): axum::extract::State<
-        std::sync::Arc<tokio::sync::Mutex<AppState>>,
-    >,
+    axum::Extension(db_pool): axum::Extension<sqlx::SqlitePool>,
     axum::Json(form): axum::Json<SearchForm>,
 ) -> (axum::http::StatusCode, axum::Json<serde_json::Value>) {
-    match timebank_db::search_record(
-        &app_state.lock().await.pool,
-        &form.date_begin,
-        &form.date_end,
-    )
-    .await
-    {
+    match timebank_db::search_record(&db_pool, &form.date_begin, &form.date_end).await {
         Ok(record_list) => (
             axum::http::StatusCode::OK,
             axum::Json(serde_json::json!(record_list)),
@@ -58,8 +42,9 @@ pub async fn record_search(
 }
 
 pub async fn record_create(
-    axum::extract::State(app_state): axum::extract::State<
-        std::sync::Arc<tokio::sync::Mutex<AppState>>,
+    axum::Extension(db_pool): axum::Extension<sqlx::SqlitePool>,
+    axum::Extension(mut ip_to_admin_token_error_count_map): axum::Extension<
+        std::collections::HashMap<String, usize>,
     >,
     axum::extract::ConnectInfo(connect_info): axum::extract::ConnectInfo<std::net::SocketAddr>,
     request_header_map: axum::http::HeaderMap,
@@ -77,14 +62,10 @@ pub async fn record_create(
     };
     tracing::info!("client_ip {client_ip}");
 
-    let mut app_state = app_state.lock().await;
-
-    let ip_to_admin_token_error_count_map = &mut app_state.ip_to_admin_token_error_count_map;
-
     let admin_token_error_count = ip_to_admin_token_error_count_map
         .get(&client_ip)
         .unwrap_or(&0);
-    tracing::info!(admin_token_error_count);
+    tracing::info!("admin_token_error_count {admin_token_error_count}");
 
     if *admin_token_error_count >= 3 {
         return (
@@ -96,7 +77,7 @@ pub async fn record_create(
     }
 
     let admin_token = std::env::var("ADMIN_TOKEN").unwrap_or("admin_token".to_string());
-    tracing::info!(admin_token);
+    tracing::info!("admin_token {admin_token}");
 
     let admin_token_from_request = match request_header_map.get("admin_token") {
         Some(value) => value.to_str().unwrap_or(""),
@@ -108,7 +89,7 @@ pub async fn record_create(
             );
         }
     };
-    tracing::info!(admin_token_from_request);
+    tracing::info!("admin_token_from_request {admin_token_from_request}");
 
     if admin_token != admin_token_from_request {
         ip_to_admin_token_error_count_map.insert(client_ip, *admin_token_error_count + 1);
@@ -119,18 +100,16 @@ pub async fn record_create(
     }
 
     match timebank_core::generate_record_vec(&record) {
-        Ok(record_vec) => {
-            match timebank_db::insert_record_vec(&app_state.pool, &record_vec).await {
-                Ok(_) => (
-                    axum::http::StatusCode::OK,
-                    axum::Json(serde_json::json!(record_vec)),
-                ),
-                Err(e) => (
-                    axum::http::StatusCode::BAD_REQUEST,
-                    axum::Json(serde_json::json!({ "message": e })),
-                ),
-            }
-        }
+        Ok(record_vec) => match timebank_db::insert_record_vec(&db_pool, &record_vec).await {
+            Ok(_) => (
+                axum::http::StatusCode::OK,
+                axum::Json(serde_json::json!(record_vec)),
+            ),
+            Err(e) => (
+                axum::http::StatusCode::BAD_REQUEST,
+                axum::Json(serde_json::json!({ "message": e })),
+            ),
+        },
         Err(e) => (
             axum::http::StatusCode::BAD_REQUEST,
             axum::Json(serde_json::json!({ "message": e })),
@@ -156,7 +135,7 @@ pub async fn db_backup_scheduler_start() {
         },
     ));
 
-    tracing::info!(cron);
+    tracing::info!("cron {cron}");
 
     loop {
         sched.tick();

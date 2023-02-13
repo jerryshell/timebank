@@ -1,7 +1,7 @@
 #[tokio::main]
 async fn main() {
     // init db
-    let pool = timebank_db::init_sqlite_db()
+    let db_pool = timebank_db::init_sqlite_db()
         .await
         .expect("timebank_db::init_sqlite_db() err");
 
@@ -11,11 +11,8 @@ async fn main() {
     // init db bakcup scheduler
     tokio::spawn(async { timebank_http::db_backup_scheduler_start().await });
 
-    // init app state
-    let app_state = std::sync::Arc::new(tokio::sync::Mutex::new(timebank_http::AppState {
-        pool,
-        ip_to_admin_token_error_count_map: std::collections::HashMap::new(),
-    }));
+    // init ip_to_admin_token_error_count_map
+    let ip_to_admin_token_error_count_map = std::collections::HashMap::<String, usize>::new();
 
     // cors
     let cors = tower_http::cors::CorsLayer::new()
@@ -38,7 +35,8 @@ async fn main() {
             "/record/create",
             axum::routing::post(timebank_http::record_create),
         )
-        .with_state(app_state)
+        .layer(axum::Extension(db_pool))
+        .layer(axum::Extension(ip_to_admin_token_error_count_map))
         .layer(cors);
 
     // init port
