@@ -8,10 +8,10 @@ timebank_core = { path = "../timebank_core" }
 timebank_db = { path = "../timebank_db" }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-tokio = { version = "1.25", features = ["full"] }
+tokio = { version = "1.26", features = ["full"] }
 axum = { version = "0.6", features = ["http2"] }
 tracing = "0.1"
 tracing-subscriber = "0.3"
 sqlx = { version = "0.6", features = ["runtime-tokio-rustls", "sqlite"] }
-tower-http = { version = "0.3", features = ["cors"] }
+tower-http = { version = "0.4", features = ["cors"] }
 job_scheduler = "1.2"
