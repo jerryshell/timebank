@@ -9,7 +9,7 @@ async fn main() {
     tracing_subscriber::fmt::init();
 
     // init db bakcup scheduler
-    tokio::spawn(async { timebank_http::db_backup_scheduler_start().await });
+    tokio::spawn(timebank_http::db_backup_scheduler_start());
 
     // init ip_to_admin_token_error_count_map
     let ip_to_admin_token_error_count_map = std::collections::HashMap::<String, usize>::new();
