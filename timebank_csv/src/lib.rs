@@ -41,10 +41,7 @@ pub fn generate_record_vec_by_csv_path(
             remark: csv_row.remark,
         };
 
-        let Ok(mut sub_record_vec) = timebank_core::generate_record_vec(&sub_record) else {
-            tracing::warn!("generate_record_vec error sub_record={:?}", sub_record);
-            continue;
-        };
+        let mut sub_record_vec = timebank_core::generate_record_vec(&sub_record);
 
         record_vec.append(&mut sub_record_vec)
     }
