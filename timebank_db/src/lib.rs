@@ -5,11 +5,11 @@ pub async fn init_sqlite_db() -> Result<sqlx::Pool<sqlx::Sqlite>, String> {
         .connect("sqlite:timebank.sqlite?mode=rwc")
         .await
     {
-        Ok(conn) => conn,
+        Ok(pool) => pool,
         Err(e) => return Err(e.to_string()),
     };
 
-    if let Err(e) = sqlx::query(
+    match sqlx::query(
         "create table if not exists record (
              date text,
              time_index_begin integer,
@@ -22,17 +22,16 @@ pub async fn init_sqlite_db() -> Result<sqlx::Pool<sqlx::Sqlite>, String> {
     .execute(&pool)
     .await
     {
-        return Err(e.to_string());
-    };
-
-    Ok(pool)
+        Ok(_) => Ok(pool),
+        Err(e) => Err(e.to_string()),
+    }
 }
 
 pub async fn insert_record(
     pool: &sqlx::Pool<sqlx::Sqlite>,
     record: &timebank_core::Record,
 ) -> Result<(), String> {
-    if let Err(e) = sqlx::query(
+    match sqlx::query(
         "insert or replace into record (date, time_index_begin, time_index_end, type_str, remark) values (?, ?, ?, ?, ?)"
     )
     .bind(record.date.to_string())
@@ -40,23 +39,25 @@ pub async fn insert_record(
     .bind(record.time_index_end.to_string())
     .bind(record.type_str.to_string())
     .bind(record.remark.to_string())
-    .execute(pool).await {
-        return Err(e.to_string());
-    };
-    Ok(())
+    .execute(pool)
+    .await
+    {
+        Ok(_) => Ok(()),
+        Err(e) => Err(e.to_string()),
+    }
 }
 
-pub async fn insert_record_vec(
+pub async fn insert_record_list(
     pool: &sqlx::Pool<sqlx::Sqlite>,
-    record_vec: &[timebank_core::Record],
+    record_list: &[timebank_core::Record],
 ) -> Result<(), String> {
-    for record in record_vec.iter() {
+    for record in record_list.iter() {
         insert_record(pool, record).await?;
     }
     Ok(())
 }
 
-fn sqlite_row_to_record(row: sqlx::sqlite::SqliteRow) -> timebank_core::Record {
+fn sqlite_row_to_record(row: &sqlx::sqlite::SqliteRow) -> timebank_core::Record {
     let date = row.get("date");
     let time_index_begin = row.get("time_index_begin");
     let time_index_end = row.get("time_index_end");
@@ -75,7 +76,7 @@ pub async fn get_record_list(
     pool: &sqlx::Pool<sqlx::Sqlite>,
 ) -> Result<Vec<timebank_core::Record>, String> {
     match sqlx::query("select * from record order by date desc, time_index_end desc")
-        .map(sqlite_row_to_record)
+        .map(|row| sqlite_row_to_record(&row))
         .fetch_all(pool)
         .await
     {
@@ -94,7 +95,7 @@ pub async fn search_record(
     )
     .bind(date_begin)
     .bind(date_end)
-    .map(sqlite_row_to_record)
+    .map(|row| sqlite_row_to_record(&row))
     .fetch_all(pool)
     .await
     {

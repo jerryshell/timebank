@@ -13,12 +13,12 @@ pub struct Record {
 }
 
 pub fn hhmm_to_time_index(hhmm: &str) -> Result<u32, String> {
-    let hhmm_split: Vec<&str> = hhmm.split(':').collect();
-    if hhmm_split.len() != 2 {
+    let hhmm_split_list = hhmm.split(':').collect::<Vec<&str>>();
+    if hhmm_split_list.len() != 2 {
         return Err(format!("invalid(1) hhmm: {hhmm}"));
     }
 
-    let Some(hh) = hhmm_split.first() else {
+    let Some(hh) = hhmm_split_list.first() else {
         return Err(format!("invalid(2) hhmm: {hhmm}"));
     };
 
@@ -28,7 +28,7 @@ pub fn hhmm_to_time_index(hhmm: &str) -> Result<u32, String> {
 
     let mut time_index = hh_u32 * 2;
 
-    let Some(mm) = hhmm_split.last() else {
+    let Some(mm) = hhmm_split_list.last() else {
         return Err(format!("invalid(4) hhmm: {hhmm}"));
     };
 
@@ -40,12 +40,12 @@ pub fn hhmm_to_time_index(hhmm: &str) -> Result<u32, String> {
 }
 
 pub fn hhmmhhmm_to_time_index_range(hhmmhhmm: &str) -> Result<(u32, u32), String> {
-    let hhmmhhmm_split: Vec<&str> = hhmmhhmm.split('-').collect();
-    if hhmmhhmm_split.len() != 2 {
+    let hhmmhhmm_split_list = hhmmhhmm.split('-').collect::<Vec<&str>>();
+    if hhmmhhmm_split_list.len() != 2 {
         return Err(format!("invalid(1) hhmmhhmm: {hhmmhhmm}"));
     }
 
-    let Some(hhmm1) = hhmmhhmm_split.first() else {
+    let Some(hhmm1) = hhmmhhmm_split_list.first() else {
         return Err(format!("invalid(2) hhmmhhmm: {hhmmhhmm}"));
     };
 
@@ -53,7 +53,7 @@ pub fn hhmmhhmm_to_time_index_range(hhmmhhmm: &str) -> Result<(u32, u32), String
         return Err(format!("invalid(3) hhmmhhmm: {hhmmhhmm}"));
     };
 
-    let Some(hhmm2) = hhmmhhmm_split.last() else {
+    let Some(hhmm2) = hhmmhhmm_split_list.last() else {
         return Err(format!("invalid(4) hhmmhhmm: {hhmmhhmm}"));
     };
 
@@ -64,7 +64,7 @@ pub fn hhmmhhmm_to_time_index_range(hhmmhhmm: &str) -> Result<(u32, u32), String
     Ok((hhmm1_time_index, hhmm2_time_index))
 }
 
-pub fn generate_record_vec(record: &Record) -> Vec<Record> {
+pub fn generate_record_list(record: &Record) -> Vec<Record> {
     (record.time_index_begin..record.time_index_end)
         .map(|time_index| Record {
             time_index_begin: time_index,

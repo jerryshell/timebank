@@ -8,9 +8,9 @@ pub struct CsvRow {
     pub remark: String,
 }
 
-pub fn generate_record_vec_by_csv_path(
+pub fn generate_record_list_by_csv_path(
     csv_path: &std::path::PathBuf,
-) -> Result<Vec<timebank_core::Record>, String> {
+) -> Vec<timebank_core::Record> {
     let csv_filename = csv_path
         .file_name()
         .expect("csv_path.file_name() err")
@@ -22,15 +22,14 @@ pub fn generate_record_vec_by_csv_path(
         .next()
         .expect("csv_filename.split().next() err");
 
-    let mut record_vec: Vec<timebank_core::Record> = vec![];
-
     let mut reader = csv::Reader::from_path(csv_path).expect("csv::Reader::from_path() err");
-    for result in reader.deserialize() {
-        let csv_row: CsvRow = result.expect("reader.deserialize().result err");
+
+    reader.deserialize().flat_map(|item| {
+        let csv_row: CsvRow = item.expect("reader.deserialize().result err");
 
         let Ok(time_index_range) =  timebank_core::hhmmhhmm_to_time_index_range(&csv_row.time_str) else {
             tracing::warn!("invalid csv_row.time_str={}", csv_row.time_str);
-            continue;
+            return vec![];
         };
 
         let sub_record = timebank_core::Record {
@@ -41,10 +40,6 @@ pub fn generate_record_vec_by_csv_path(
             remark: csv_row.remark,
         };
 
-        let mut sub_record_vec = timebank_core::generate_record_vec(&sub_record);
-
-        record_vec.append(&mut sub_record_vec)
-    }
-
-    Ok(record_vec)
+        timebank_core::generate_record_list(&sub_record)
+    }).collect::<Vec<timebank_core::Record>>()
 }

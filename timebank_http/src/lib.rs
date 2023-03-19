@@ -99,11 +99,11 @@ pub async fn record_create(
         );
     }
 
-    let record_vec = timebank_core::generate_record_vec(&record);
-    match timebank_db::insert_record_vec(&db_pool, &record_vec).await {
+    let record_list = timebank_core::generate_record_list(&record);
+    match timebank_db::insert_record_list(&db_pool, &record_list).await {
         Ok(_) => (
             axum::http::StatusCode::OK,
-            axum::Json(serde_json::json!(record_vec)),
+            axum::Json(serde_json::json!(record_list)),
         ),
         Err(e) => (
             axum::http::StatusCode::BAD_REQUEST,

@@ -10,11 +10,10 @@ async fn main() {
         match entry {
             Ok(csv_path) => {
                 tracing::info!("csv_path={:?}", csv_path);
-                let record_vec = timebank_csv::generate_record_vec_by_csv_path(&csv_path)
-                    .expect("generate_record_vec_by_csv_path() err");
-                timebank_db::insert_record_vec(&pool, &record_vec)
+                let record_list = timebank_csv::generate_record_list_by_csv_path(&csv_path);
+                timebank_db::insert_record_list(&pool, &record_list)
                     .await
-                    .expect("insert_record_vec() err")
+                    .expect("insert_record_list() err")
             }
             Err(e) => tracing::info!("e={}", e),
         }
