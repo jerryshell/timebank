@@ -1,12 +1,12 @@
 #[tokio::main]
 async fn main() {
+    // init tracing
+    tracing_subscriber::fmt::init();
+
     // init db
     let db_pool = timebank_db::init_sqlite_db()
         .await
         .expect("timebank_db::init_sqlite_db() err");
-
-    // init tracing
-    tracing_subscriber::fmt::init();
 
     // init db bakcup scheduler
     tokio::spawn(timebank_http::db_backup_scheduler_start());
