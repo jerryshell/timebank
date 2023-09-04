@@ -1,9 +1,10 @@
 [workspace]
+resolver = "2"
 members = ["timebank_core", "timebank_csv", "timebank_db", "timebank_http"]
 
 [profile.release]
-opt-level = "z"
 lto = true
-codegen-units = 1
 strip = true
+opt-level = "z"
 panic = "abort"
+codegen-units = 1
