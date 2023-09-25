@@ -123,7 +123,16 @@ pub async fn record_create(
     }
 }
 
-pub async fn db_backup_scheduler_start() {
+pub async fn state(
+    axum::extract::State(app_state): axum::extract::State<SharedState>,
+) -> (axum::http::StatusCode, axum::Json<serde_json::Value>) {
+    (
+        axum::http::StatusCode::OK,
+        axum::Json(serde_json::json!(app_state)),
+    )
+}
+
+pub fn db_backup_scheduler_start() {
     let mut sched = job_scheduler::JobScheduler::new();
 
     let cron = "0 0 0 * * * *";

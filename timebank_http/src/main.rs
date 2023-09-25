@@ -15,7 +15,7 @@ async fn main() {
         .expect("timebank_db::init_sqlite_db() err");
 
     // init db bakcup scheduler
-    tokio::spawn(timebank_http::db_backup_scheduler_start());
+    std::thread::spawn(timebank_http::db_backup_scheduler_start);
 
     // init app state
     let app_state = timebank_http::SharedState::default();
@@ -41,6 +41,7 @@ async fn main() {
             "/record/create",
             axum::routing::post(timebank_http::record_create),
         )
+        .route("/state", axum::routing::get(timebank_http::state))
         .layer(cors)
         .layer(axum::Extension(db_pool))
         .with_state(app_state);
