@@ -1,3 +1,4 @@
 **/target
 /csv_data/*.csv
 timebank.sqlite
+*.log.*

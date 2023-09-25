@@ -5,6 +5,5 @@ members = ["timebank_core", "timebank_csv", "timebank_db", "timebank_http"]
 [profile.release]
 lto = true
 strip = true
-opt-level = "z"
 panic = "abort"
 codegen-units = 1

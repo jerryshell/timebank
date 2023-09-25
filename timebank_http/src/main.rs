@@ -17,8 +17,8 @@ async fn main() {
     // init db bakcup scheduler
     tokio::spawn(timebank_http::db_backup_scheduler_start());
 
-    // init ip_to_admin_token_error_count_map
-    let ip_to_admin_token_error_count_map = std::collections::HashMap::<String, usize>::new();
+    // init app state
+    let app_state = timebank_http::SharedState::default();
 
     // cors
     let cors = tower_http::cors::CorsLayer::new()
@@ -41,9 +41,9 @@ async fn main() {
             "/record/create",
             axum::routing::post(timebank_http::record_create),
         )
+        .layer(cors)
         .layer(axum::Extension(db_pool))
-        .layer(axum::Extension(ip_to_admin_token_error_count_map))
-        .layer(cors);
+        .with_state(app_state);
 
     // init ip addr
     let ip_addr = std::env::var("IP_ADDR")
