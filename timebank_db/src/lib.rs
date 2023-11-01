@@ -47,14 +47,18 @@ pub async fn insert_record(
     }
 }
 
-pub async fn delete_record_by_id(
+pub async fn delete_record(
     pool: &sqlx::Pool<sqlx::Sqlite>,
-    id: &str,
+    record: &timebank_core::Record,
 ) -> Result<(), String> {
-    match sqlx::query("delete from record where id = ?")
-        .bind(id)
-        .execute(pool)
-        .await
+    match sqlx::query(
+        "delete from record where date = ? and time_index_begin = ? and time_index_end = ?",
+    )
+    .bind(record.date.to_string())
+    .bind(record.time_index_begin.to_string())
+    .bind(record.time_index_end.to_string())
+    .execute(pool)
+    .await
     {
         Ok(_) => Ok(()),
         Err(e) => Err(e.to_string()),
