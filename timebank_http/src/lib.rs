@@ -48,13 +48,11 @@ pub async fn record_search(
     }
 }
 
-pub async fn record_create(
-    axum::Extension(db_pool): axum::Extension<sqlx::SqlitePool>,
-    axum::extract::State(app_state): axum::extract::State<SharedState>,
-    axum::extract::ConnectInfo(connect_info): axum::extract::ConnectInfo<std::net::SocketAddr>,
+fn check_admin_token_error_count(
+    app_state: SharedState,
     request_header_map: axum::http::HeaderMap,
-    axum::Json(record): axum::Json<timebank_core::Record>,
-) -> (axum::http::StatusCode, axum::Json<serde_json::Value>) {
+    connect_info: std::net::SocketAddr,
+) -> Result<(), (axum::http::StatusCode, axum::Json<serde_json::Value>)> {
     tracing::info!("request_header_map {:?}", request_header_map);
 
     let header_value_iter = request_header_map.get_all("x-forwarded-for").iter();
@@ -67,48 +65,59 @@ pub async fn record_create(
     };
     tracing::info!("client_ip {client_ip}");
 
-    // check admin token error count
-    {
-        let ip_to_admin_token_error_count_map =
-            &mut app_state.write().unwrap().ip_to_admin_token_error_count_map;
+    let ip_to_admin_token_error_count_map =
+        &mut app_state.write().unwrap().ip_to_admin_token_error_count_map;
 
-        let admin_token_error_count = ip_to_admin_token_error_count_map
-            .get(&client_ip)
-            .unwrap_or(&0);
-        tracing::info!("admin_token_error_count {admin_token_error_count}");
+    let admin_token_error_count = ip_to_admin_token_error_count_map
+        .get(&client_ip)
+        .unwrap_or(&0);
+    tracing::info!("admin_token_error_count {admin_token_error_count}");
 
-        if *admin_token_error_count >= 3 {
-            return (
-                axum::http::StatusCode::FORBIDDEN,
-                axum::Json(serde_json::json!({
-                    "message": format!("This ip has been banned: {client_ip}")
-                })),
-            );
-        }
-
-        let admin_token = std::env::var("ADMIN_TOKEN").unwrap_or("admin_token".to_string());
-        tracing::info!("admin_token {admin_token}");
-
-        let admin_token_from_request = match request_header_map.get("admin_token") {
-            Some(value) => value.to_str().unwrap_or(""),
-            None => {
-                ip_to_admin_token_error_count_map.insert(client_ip, *admin_token_error_count + 1);
-                return (
-                    axum::http::StatusCode::BAD_REQUEST,
-                    axum::Json(serde_json::json!({ "message": "admin_token bank" })),
-                );
-            }
-        };
-        tracing::info!("admin_token_from_request {admin_token_from_request}");
-
-        if admin_token != admin_token_from_request {
-            ip_to_admin_token_error_count_map.insert(client_ip, *admin_token_error_count + 1);
-            return (
-                axum::http::StatusCode::BAD_REQUEST,
-                axum::Json(serde_json::json!({ "message": "admin_token invalid" })),
-            );
-        }
+    if *admin_token_error_count >= 3 {
+        return Err((
+            axum::http::StatusCode::FORBIDDEN,
+            axum::Json(serde_json::json!({
+                "message": format!("This ip has been banned: {client_ip}")
+            })),
+        ));
     }
+
+    let admin_token = std::env::var("ADMIN_TOKEN").unwrap_or("admin_token".to_string());
+    tracing::info!("admin_token {admin_token}");
+
+    let admin_token_from_request = match request_header_map.get("admin_token") {
+        Some(value) => value.to_str().unwrap_or(""),
+        None => {
+            ip_to_admin_token_error_count_map.insert(client_ip, *admin_token_error_count + 1);
+            return Err((
+                axum::http::StatusCode::BAD_REQUEST,
+                axum::Json(serde_json::json!({ "message": "admin_token bank" })),
+            ));
+        }
+    };
+    tracing::info!("admin_token_from_request {admin_token_from_request}");
+
+    if admin_token != admin_token_from_request {
+        ip_to_admin_token_error_count_map.insert(client_ip, *admin_token_error_count + 1);
+        return Err((
+            axum::http::StatusCode::BAD_REQUEST,
+            axum::Json(serde_json::json!({ "message": "admin_token invalid" })),
+        ));
+    }
+
+    Ok(())
+}
+
+pub async fn record_create(
+    axum::Extension(db_pool): axum::Extension<sqlx::SqlitePool>,
+    axum::extract::State(app_state): axum::extract::State<SharedState>,
+    axum::extract::ConnectInfo(connect_info): axum::extract::ConnectInfo<std::net::SocketAddr>,
+    request_header_map: axum::http::HeaderMap,
+    axum::Json(record): axum::Json<timebank_core::Record>,
+) -> (axum::http::StatusCode, axum::Json<serde_json::Value>) {
+    if let Err(e) = check_admin_token_error_count(app_state, request_header_map, connect_info) {
+        return e;
+    };
 
     let record_list = timebank_core::generate_record_list(&record);
     match timebank_db::insert_record_list(&db_pool, &record_list).await {
