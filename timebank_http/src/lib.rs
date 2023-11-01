@@ -108,6 +108,29 @@ fn check_admin_token_error_count(
     Ok(())
 }
 
+pub async fn record_delete_by_id(
+    axum::Extension(db_pool): axum::Extension<sqlx::SqlitePool>,
+    axum::extract::State(app_state): axum::extract::State<SharedState>,
+    axum::extract::Path(id): axum::extract::Path<String>,
+    request_header_map: axum::http::HeaderMap,
+    axum::extract::ConnectInfo(connect_info): axum::extract::ConnectInfo<std::net::SocketAddr>,
+) -> (axum::http::StatusCode, axum::Json<serde_json::Value>) {
+    if let Err(e) = check_admin_token_error_count(app_state, request_header_map, connect_info) {
+        return e;
+    };
+
+    match timebank_db::delete_record_by_id(&db_pool, &id).await {
+        Ok(_) => (
+            axum::http::StatusCode::OK,
+            axum::Json(serde_json::Value::Null),
+        ),
+        Err(e) => (
+            axum::http::StatusCode::BAD_REQUEST,
+            axum::Json(serde_json::json!({ "message": e })),
+        ),
+    }
+}
+
 pub async fn record_create(
     axum::Extension(db_pool): axum::Extension<sqlx::SqlitePool>,
     axum::extract::State(app_state): axum::extract::State<SharedState>,

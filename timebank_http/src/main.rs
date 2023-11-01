@@ -41,6 +41,10 @@ async fn main() {
             "/record/create",
             axum::routing::post(timebank_http::record_create),
         )
+        .route(
+            "/record/delete/:id",
+            axum::routing::delete(timebank_http::record_delete_by_id),
+        )
         .route("/state", axum::routing::get(timebank_http::state))
         .layer(cors)
         .layer(axum::Extension(db_pool))
